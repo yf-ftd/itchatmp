@@ -1,0 +1,15 @@
+itchatmp started! press Ctrl+C to exit.
+Traceback (most recent call last):
+  File "/home/admin/itchatmp/itchatmp/components/register.py", line 55, in sync_post_fn
+    reply = reply_fn(copy.deepcopy(msgDict))
+  File "test.py", line 62, in text_reply
+    print('get message:' + "\n" + msg['Content'])
+UnicodeEncodeError: 'ascii' codec can't encode characters in position 13-14: ordinal not in range(128)
+
+Traceback (most recent call last):
+  File "/home/admin/itchatmp/itchatmp/components/register.py", line 55, in sync_post_fn
+    reply = reply_fn(copy.deepcopy(msgDict))
+  File "test.py", line 62, in text_reply
+    print('get message:' + "\n" + msg['Content'])
+UnicodeEncodeError: 'ascii' codec can't encode character u'\u5582' in position 13: ordinal not in range(128)
+

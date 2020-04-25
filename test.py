@@ -1,30 +1,34 @@
-# coding = utf8
+#coding=utf8
 import requests
 import itchatmp
 import time
 import tornado
+import thread
+from apscheduler.schedulers.background import BlockingScheduler
 
-KEY = 'fc5730155a3f4f4a898d8df37d9bcca2'
+KEY = '973729946b3e4b19a0188b4da1b34a06'
+userName='oXYjFjq1DBOQEDLX8PRlrWxg4g_k'
 
+def send_weather_info_to_user():
+    itchatmp.messages.send_all(itchatmp.content.TEXT,getweatherinfo())
+    #itchatmp.send(getweatherinfo(),userName)
 
 def tuling_get_response(msg):
     apiUrl = 'http://www.tuling123.com/openapi/api'
     data = {
         'key': KEY,
-        'info': msg,  # 这是要发送出去的信息
-        'userid': 'wechat-robot',  # 这里随意写点什么都行
+        'info': msg,  
+        'userid': 'wechat-robot',  
     }
     try:
-        # 发送一个post请求
         r = requests.post(apiUrl, data=data).json()
-        # 获取文本信息，若没有‘Text’ 值，将返回Nonoe
         return r.get('text')
     except:
         return
 
 
 def getweatherinfo():
-    weatherInfo = xiaobing("北京天气")
+    weatherInfo = tuling_get_response("明天朝阳天气")
     print(weatherInfo)
     return weatherInfo
 
@@ -39,7 +43,8 @@ def xiaobing(msg):
                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                              'Chrome/79.0.3945.130 Safari/537.36',
                'Referer': 'https://api.weibo.com/chat/'}
-    response = requests.post(url_send, data=data, headers=headers, proxies=proxies).json()
+    response = requests.post(url_send, data=data, headers=headers).json()
+    print(str(response))
     sendMsg = response['text']
     time.sleep(1)
     while True:
@@ -55,22 +60,44 @@ def xiaobing(msg):
 itchatmp.update_config(itchatmp.WechatConfig(
     token='crystal901217',
     appId='wx4b4055dd0d06f37e',
-    appSecret='a25e2e849f4a7b1f50286cdd063d94a5'))
+    appSecret='84d49e751a3b04c56296444cca23d89c'))
 
 
 @itchatmp.msg_register(itchatmp.content.TEXT)
 def text_reply(msg):
-    print('get message from:' + msg['User']['NickName'] + "\n" + msg['Text'])
+    print('from user:' + msg['FromUserName'])
+    print('get message:' + "\n" + msg['Content'])
     defaultReply = '[自动回复]已收到消息，谢谢'
-    if msg['User']['NickName'] == 'D &amp; E' or msg['User']['NickName'] == 'Lori Liu':
-        reply = xiaobing(msg['Text'])  # tuling_get_response
-        if reply:
-            print('ai reply with:' + reply)
-            return reply
-        else:
-            return defaultReply
+    reply = tuling_get_response(msg['Content'])  # tuling_get_response
+    if reply:
+        print('ai reply with:' + reply)
+        return reply
     else:
         return defaultReply
 
 
-itchatmp.run()
+def get_user_list():
+    nextId = ''
+    totalUserSet = set()
+    while 1:
+        r = itchatmp.users.get_users(nextId)
+        totalUserSet.update(r['data']['openid'])
+        if len(totalUserSet) == r['total']:
+            break
+        else:
+            nextId = r['next_openid']
+    print(totalUserSet)
+
+
+def keep_run(app):
+    app.run()
+
+thread.start_new_thread(keep_run,(itchatmp,))
+scheduler = BlockingScheduler()
+scheduler.add_job(send_weather_info_to_user,'cron',hour=19,minute=30)
+try:
+    scheduler.start()
+except(KeyboardInterrupt,SystemExit):
+    pass
+
+
