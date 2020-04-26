@@ -6,14 +6,38 @@ import tornado
 import thread
 from apscheduler.schedulers.background import BlockingScheduler
 
-KEY = '973729946b3e4b19a0188b4da1b34a06'
+KEY = ''
+KEY_BARRY = '7f37aa284ef847eeaa6de19e6b7a198a'
+KEY_LORI = '973729946b3e4b19a0188b4da1b34a06'
+KEY_LINK = '54736610220840e3836ac573d9bcaf05'
+KEY_VIC = '736dcf722ad846e7ac92051d62fdcac6'
+KEY_CRYSTAL = 'b958e1635cfb4614a627c4590ffafe17'
+key_list = (KEY_LORI,KEY_LINK,KEY_VIC,KEY_BARRY,KEY_CRYSTAL)
+key_map = {}
 userName='oXYjFjq1DBOQEDLX8PRlrWxg4g_k'
 
 def send_weather_info_to_user():
-    itchatmp.messages.send_all(itchatmp.content.TEXT,getweatherinfo())
+    global key_map
+    key_map.clear()
+    #itchatmp.messages.send_all(itchatmp.content.TEXT,getweatherinfo())
     #itchatmp.send(getweatherinfo(),userName)
 
 def tuling_get_response(msg):
+    global KEY
+    for key in key_list:
+        if key_map.has_key(key):
+            if key_map[key] == 100:
+                pass
+            else:
+                key_map[key] = key_map[key] + 1
+                print('current num:'+ str(key_map[key]))
+                KEY = key
+                break
+        else:
+            key_map[key] = 1
+            KEY = key
+            break
+    print('current key:' + KEY)
     apiUrl = 'http://www.tuling123.com/openapi/api'
     data = {
         'key': KEY,
@@ -22,7 +46,10 @@ def tuling_get_response(msg):
     }
     try:
         r = requests.post(apiUrl, data=data).json()
-        return r.get('text')
+        if r.has_key('url'):
+            return r.get('text') + '\n' + r.get('url')
+        else:
+            return r.get('text')
     except:
         return
 
@@ -94,7 +121,7 @@ def keep_run(app):
 
 thread.start_new_thread(keep_run,(itchatmp,))
 scheduler = BlockingScheduler()
-scheduler.add_job(send_weather_info_to_user,'cron',hour=19,minute=30)
+scheduler.add_job(send_weather_info_to_user,'cron',hour=23,minute=59)
 try:
     scheduler.start()
 except(KeyboardInterrupt,SystemExit):
