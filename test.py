@@ -4,8 +4,12 @@ import itchatmp
 import time
 import tornado
 import thread
+import requests,json
 from apscheduler.schedulers.background import BlockingScheduler
+import sys
 
+reload(sys)  
+sys.setdefaultencoding('utf8')
 KEY = ''
 KEY_BARRY = '7f37aa284ef847eeaa6de19e6b7a198a'
 KEY_LORI = '973729946b3e4b19a0188b4da1b34a06'
@@ -15,6 +19,23 @@ KEY_CRYSTAL = 'b958e1635cfb4614a627c4590ffafe17'
 key_list = (KEY_LORI,KEY_LINK,KEY_VIC,KEY_BARRY,KEY_CRYSTAL)
 key_map = {}
 userName='oXYjFjq1DBOQEDLX8PRlrWxg4g_k'
+trash_url = 'http://www.lajiflw.cn/rubbish/search'
+
+def get_trash_category(name):
+    get_req_url = trash_url + "?q=" + name
+    res = requests.get(get_req_url)
+    print(res.text)
+    json_map = json.loads(res.text)
+    if len(json_map['data']) > 0:
+        category = json_map['data'][0]['itemCategory']
+        if category == '干垃圾':
+            return '其他垃圾'
+        elif category == '湿垃圾':
+            return '厨余垃圾'
+        else:
+            return category
+    else:
+        return '未找到分类'
 
 def send_weather_info_to_user():
     global key_map
@@ -94,6 +115,10 @@ itchatmp.update_config(itchatmp.WechatConfig(
 def text_reply(msg):
     print('from user:' + msg['FromUserName'])
     print('get message:' + "\n" + msg['Content'])
+    if msg['Content'].startswith('垃圾分类'):
+        trash_name = msg['Content'].replace('垃圾分类','').strip()
+        print('trash name:'+trash_name)
+        return get_trash_category(trash_name)
     defaultReply = '[自动回复]已收到消息，谢谢'
     reply = tuling_get_response(msg['Content'])  # tuling_get_response
     if reply:
